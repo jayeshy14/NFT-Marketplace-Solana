@@ -2,9 +2,36 @@ import React, { FC, useState } from 'react';
 import { useAnchorWallet, useConnection } from '@solana/wallet-adapter-react';
 import { Program, AnchorProvider, web3, Idl } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
-import idl from "../IDL.json"
+// import idl from "../IDL.json"
 import axios from 'axios'; 
-
+const idl: Idl = {
+  version: "0.1.0",
+  name: "solana_nft",
+  instructions: [
+    {
+      name: "mint_nft",
+      accounts: [
+        { name: "nft_account", isMut: true, isSigner: true },
+        { name: "owner", isMut: true, isSigner: true },
+        { name: "system_program", isMut: false, isSigner: false },
+      ],
+      args: [{ name: "uri", type: "string" }],
+    },
+  ],
+  accounts: [
+    {
+      name: "NFT",
+      type: {
+        kind: "struct",
+        fields: [
+          { name: "owner", type: "publicKey" },
+          { name: "uri", type: "string" },
+        ],
+      },
+    },
+  ],
+  types: [],
+};
 const programID = new PublicKey('6NvWeuE9C2bfJ9cd2d2vBXf935p4BNhTCJwLnVoxm7s3');
 
 const MintNFT: FC = () => {
@@ -49,9 +76,9 @@ const MintNFT: FC = () => {
     try {
       const uri = await uploadToIPFS(file);
       const provider = new AnchorProvider(connection, wallet, {
-        preflightCommitment: 'processed',
+        commitment: "confirmed",
       });
-      const program = new Program(idl as unknown as Idl, programID, provider);
+      const program = new Program(idl as Idl, programID, provider);
       console.log("Program: ", program);
       const [nftAccount] = PublicKey.findProgramAddressSync(
         [wallet.publicKey.toBuffer()],
